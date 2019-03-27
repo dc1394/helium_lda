@@ -7,6 +7,7 @@
 
 #include "helium_lda.h"
 #include "utility/deleter.h"
+#include <array>                                // for std::array
 #include <cmath>                                // for std::pow, std::sqrt
 #include <iostream>                             // for std::cerr, std::cin, std::cout
 #include <memory>                               // for std::unique_ptr
@@ -16,11 +17,12 @@
 #include <boost/format.hpp>                     // for boost::format
 #include <boost/math/constants/constants.hpp>   // for boost::math::constants::pi
 #include <Eigen/Eigenvalues>                    // for Eigen::GeneralizedSelfAdjointEigenSolver
-#include <gsl/gsl_integration.h>
+#include <gsl/gsl_integration.h>                // for gsl_integration_glfixed
 
 namespace helium_lda {
     Helium_LDA::Helium_LDA()
         :   pcfunc_(new xc_func_type, utility::xcfunc_deleter),
+            ptable_(gsl_integration_glfixed_table_alloc(Helium_LDA::INTEGTABLENUM), utility::gsl_integration_glfixed_table_deleter),
             pxfunc_(new xc_func_type, utility::xcfunc_deleter)
     {
         xc_func_init(pcfunc_.get(), XC_LDA_C_VWN, XC_POLARIZED);
@@ -30,7 +32,43 @@ namespace helium_lda {
         input_nalpha();
 
         f_ = Eigen::MatrixXd::Zero(nalpha_, nalpha_);
+
+        func_.function = [](double x, void * params)
+        {
+            auto const [alpha, c, pxfunc, pcfunc, p, q] =
+                *(reinterpret_cast< 
+                        std::tuple< std::valarray<double>,
+                                    Eigen::VectorXd, decltype(pxfunc_),
+                                    decltype(pcfunc_),
+                                    std::int32_t,
+                                    std::int32_t> *>(params));
+            auto const nalpha = alpha.size();
+
+            auto rhotemp = 0.0;
+            for (auto r = 0U; r < nalpha; r++)
+            {
+                rhotemp += c[r] * std::exp(-alpha[r] * x * x);
+            }
+            
+            rhotemp *= rhotemp;
+
+            // 電子密度
+            std::array<double, 2> rho = { rhotemp, rhotemp };
+
+            // 交換相関ポテンシャル
+            std::array<double, 1> zk_x, zk_c;
+
+            // 交換ポテンシャルを求める
+            xc_lda_vxc(pxfunc.get(), 1, rho.data(), zk_x.data());
+
+            // 相関ポテンシャルを求める
+            xc_lda_vxc(pcfunc.get(), 1, rho.data(), zk_c.data());
+
+            return x * x * std::exp(-alpha[p] * x * x) * (zk_x[0] + zk_c[0]) * std::exp(-alpha[q] * x * x);
+        };
+
         h_.resize(boost::extents[nalpha_][nalpha_]);
+        k_.resize(boost::extents[nalpha_][nalpha_]);
         q_.resize(boost::extents[nalpha_][nalpha_][nalpha_][nalpha_]);
         s_ = Eigen::MatrixXd::Zero(nalpha_, nalpha_);
     }
@@ -60,6 +98,9 @@ namespace helium_lda {
 
         // SCFループ
         for (auto iter = 1; iter < Helium_LDA::MAXITER; iter++) {
+            // 交換相関積分を計算
+            make_exchcorrinteg();
+
             // Fock行列を生成
             make_fockmatrix();
 
@@ -72,16 +113,13 @@ namespace helium_lda {
             // 固有ベクトルを取得
             c_ = es.eigenvectors().col(0);
 
-            // 固有ベクトルを正規化
-            normalize();
-
             // 前回のSCF計算のエネルギーを保管
             auto const eold = enew;
 
             // 今回のSCF計算のエネルギーを計算する
             enew = getenergy(ep);
 
-            std::cout << boost::format("Iteration # %2d: HF eigenvalue = %.14f, energy = %.14f\n") % iter % ep % enew;
+            std::cout << boost::format("Iteration # %2d: KS eigenvalue = %.14f, energy = %.14f\n") % iter % ep % enew;
 
             // SCF計算が収束したかどうか
             if (std::fabs(enew - eold) < Helium_LDA::SCFTHRESHOLD) {
@@ -93,17 +131,72 @@ namespace helium_lda {
         // SCF計算が収束しなかった
         return std::nullopt;
     }
-
+    
     double Helium_LDA::getenergy(double ep) const
     {
-        auto e = ep;
+        using namespace boost::math::constants;
+
+        // E = 2.0 * E'
+        auto e = 2.0 * ep;
+        
         for (auto p = 0; p < nalpha_; p++) {
             for (auto q = 0; q < nalpha_; q++) {
-                // E = E' + Cp * Cq * hpq
-                e += c_[p] * c_[q] * h_[p][q];
+                for (auto r = 0; r < nalpha_; r++) {
+                    for (auto s = 0; s < nalpha_; s++) {
+                        // E -= 2.0 * ΣCp * Cq * Cr * Cs * Qprqs
+                        e -= 2.0 * c_[p] * c_[q] * c_[r] * c_[s] * q_[p][q][r][s];
+                    }
+                }
             }
         }
+  
+        // K'を求める
+        gsl_function F;
+        F.function = [](double x, void * params)
+        {
+            auto const [alpha, c, pxfunc, pcfunc] =
+                *(reinterpret_cast< 
+                        std::tuple< std::valarray<double>,
+                                    Eigen::VectorXd, decltype(pxfunc_),
+                                    decltype(pcfunc_)> *>(params));
+            auto const nalpha = alpha.size();
 
+            auto rhotemp = 0.0;
+            for (auto r = 0U; r < nalpha; r++)
+            {
+                rhotemp += c[r] * std::exp(-alpha[r] * x * x);
+            }
+            
+            rhotemp *= rhotemp;
+
+            // 電子密度
+            std::array<double, 2> rho = { rhotemp, rhotemp };
+
+            // 交換相関エネルギー
+            std::array<double, 1> zk_x, zk_c;
+
+            // 交換エネルギーを求める
+            xc_lda_exc(pxfunc.get(), 1, rho.data(), zk_x.data());
+
+            // 相関エネルギーを求める
+            xc_lda_exc(pcfunc.get(), 1, rho.data(), zk_c.data());
+
+            return x * x * (zk_x[0] + zk_c[0]) * rhotemp;
+        };
+        
+        auto params = std::make_tuple(alpha_, c_, pxfunc_, pcfunc_);
+        F.params = reinterpret_cast<void *>(&params);
+
+        // E += K'
+        e += 8.0 * pi<double>() * gsl_integration_glfixed(&F, 0.0, Helium_LDA::MAXR, ptable_.get());
+        
+        for (auto p = 0; p < nalpha_; p++) {
+            for (auto q = 0; q < nalpha_; q++) {
+                // E -= 2.0 * ΣCp * Cq * Kpq
+                e -= 2.0 * c_[p] * c_[q] * k_[p][q];
+            }
+        }
+        
         return e;
     }
 
@@ -152,16 +245,30 @@ namespace helium_lda {
         }
     }
 
+    void Helium_LDA::make_exchcorrinteg()
+    {
+        using namespace boost::math::constants;
+        
+        for (auto p = 0; p < nalpha_; p++) {
+            for (auto q = 0; q < nalpha_; q++) {
+                auto params = std::make_tuple(alpha_, c_, pxfunc_, pcfunc_, p, q);
+                func_.params = reinterpret_cast<void *>(&params);
+
+                k_[p][q] = 4.0 * pi<double>() * gsl_integration_glfixed(&func_, 0.0, Helium_LDA::MAXR, ptable_.get());
+            }
+        }
+    }
+
     void Helium_LDA::make_fockmatrix()
     {
         for (auto p = 0; p < nalpha_; p++) {
             for (auto qi = 0; qi < nalpha_; qi++) {
-                // Fpq = hpq + ΣCr * Cs * Qprqs
-                f_(p, qi) = h_[p][qi];
+                // Fpq = hpq + ΣCr * Cs * Qprqs + Kpq
+                f_(p, qi) = h_[p][qi] + k_[p][qi];
 
                 for (auto r = 0; r < nalpha_; r++) {
                     for (auto s = 0; s < nalpha_; s++) {
-                        f_(p, qi) += c_[r] * c_[s] * q_[p][r][qi][s];
+                        f_(p, qi) += 2.0 * c_[r] * c_[s] * q_[p][r][qi][s];
                     }
                 }
             }
@@ -218,8 +325,6 @@ namespace helium_lda {
     {
         using namespace boost::math::constants;
 
-        std::unique_ptr<gsl_integration_glfixed_table, decltype(utility::gsl_integration_glfixed_table_deleter)> const
-            ptable(gsl_integration_glfixed_table_alloc(Helium_LDA::INTEGTABLENUM), utility::gsl_integration_glfixed_table_deleter);
         gsl_function F;
 
         F.function = [](double x, void * params)
@@ -233,13 +338,13 @@ namespace helium_lda {
                 f += c[p] * std::exp(-alpha[p] * x * x);
             }
 
-            return 4.0 * pi<double>() * x * x * f * f;
+            return x * x * f * f;
         };
 
         auto params = std::make_pair(alpha_, c_);
         F.params = reinterpret_cast<void *>(&params);
 
-        auto const sum = gsl_integration_glfixed(&F, 0.0, 10.0, ptable.get());
+        auto const sum = 4.0 * pi<double>() * gsl_integration_glfixed(&F, 0.0, Helium_LDA::MAXR, ptable_.get());
 
         for (auto p = 0; p < nalpha_; p++)
         {

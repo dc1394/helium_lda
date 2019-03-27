@@ -140,6 +140,12 @@ namespace helium_lda {
 
         //! A private member variable (constant expression).
         /*!
+            積分区間の上限
+        */
+        static auto constexpr MAXR = 10.0;
+
+        //! A private member variable (constant expression).
+        /*!
             SCF計算のループから抜ける際のエネルギーの差の閾値
         */
         static auto constexpr SCFTHRESHOLD = 1.0E-15;
@@ -164,9 +170,21 @@ namespace helium_lda {
 
         //! A private member variable.
         /*!
+            gslによる積分オブジェクト
+        */
+        gsl_function func_;
+
+        //! A private member variable.
+        /*!
             1電子積分が格納された2次元配列
         */
         boost::multi_array<double, 2> h_;
+
+        //! A private member variable.
+        /*!
+            交換相関積分が格納された4次元配列
+        */
+        boost::multi_array<double, 2> k_;
 
         //! A private member variable.
         /*!
@@ -178,13 +196,19 @@ namespace helium_lda {
         /*!
             相関汎関数へのスマートポインタ
         */
-        std::unique_ptr<xc_func_type, decltype(utility::xcfunc_deleter)> const pcfunc_;
+        std::shared_ptr<xc_func_type> const pcfunc_;
+
+        //! A private member variable (constant).
+        /*!
+            gsl_integration_glfixed_tableへのスマートポインタ
+        */
+        std::unique_ptr<gsl_integration_glfixed_table, decltype(utility::gsl_integration_glfixed_table_deleter)> const ptable_;
 
         //! A private member variable (constant).
         /*!
             交換汎関数へのスマートポインタ
         */
-        std::unique_ptr<xc_func_type, decltype(utility::xcfunc_deleter)> const pxfunc_;
+        std::shared_ptr<xc_func_type> const pxfunc_;
 
         //! A private member variable.
         /*!
