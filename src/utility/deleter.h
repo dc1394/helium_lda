@@ -11,9 +11,9 @@
 
 #pragma once
 
-#include <boost/checked_delete.hpp>     // for boost::checked_delete
+#include <boost/checked_delete.hpp> // for boost::checked_delete
 #include <gsl/gsl_integration.h>    // for gsl_integration_glfixed_table_free
-#include <xc.h>                         // for xc_func_end
+#include <xc.h>                     // for xc_func_end
 
 namespace utility {
     //! A lambda expression.

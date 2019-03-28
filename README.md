@@ -1,22 +1,23 @@
 ﻿================================================================================
-【 ソフト名 】helium_hf
+【 ソフト名 】helium_lda
 【  作成者  】@dc1394
 ================================================================================
 
 ★これは何？
-　GTOによるRoothaan方程式を解くことにより、ヘリウム原子の基底状態のエネルギーを
-　求めるコードです。
+　GTOによるKohn-Sham-Roothaan方程式を解くことにより、ヘリウム原子の基底状態のエネルギーを
+　求めるコードです。ビルドには以下のライブラリが必要です。
 　・Boost C++ Libraries
 　・Eigen
+　・GNU Scientific Library (GSL)
 
 ★更新履歴
-　2017/12/30 ver.1.0   README.mdを書いて公開。
+　2019/3/28 ver.1.0   README.mdを書いて公開。
 
 ★ライセンス
 　このソフトはフリーソフトウェアです（2条項BSDライセンス）。
 --------------------------------------------------------------------------------
-　helium_hf
-　Copyright (C) 2017 @dc1394
+　helium_lda
+　Copyright (C) 2019 @dc1394
 
 　ソースコード形式であれバイナリ形式であれ、変更の有無に関わらず、以下の条件を満
 　たす限りにおいて、再配布および利用を許可します。
@@ -37,7 +38,7 @@
 　な損害、特別損害、懲罰的損害または結果損害のいずれに対しても一切責任を負いませ
 　ん。
 
-  Copyright (c) 2017, @dc1394
+  Copyright (c) 2019, @dc1394
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -62,7 +63,7 @@
   SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 --------------------------------------------------------------------------------
 
-  helium_hfにはBoostコミュニティによるBoost C++ Librariesを使用しています。こち
+  helium_ldaにはBoostコミュニティによるBoost C++ Librariesを使用しています。こち
 　らのライセンスは Boostライセンス になります。
 
 /* Boost Software License - Version 1.0 - August 17th, 2003
@@ -90,5 +91,8 @@
 * DEALINGS IN THE SOFTWARE.
 */
 
-　helium_hfにはEigen projectによるEigenを使用しています。こちらのライセンスは
+　helium_ldaにはEigen projectによるEigenを使用しています。こちらのライセンスは
 　MPL2になります。
+
+　helium_ldaにはGNU ProjectによるGNU Scientific Libraryを使用しています。こちらのラ
+  イセンスは GNU General Public License になります。

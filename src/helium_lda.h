@@ -10,12 +10,12 @@
 #pragma once
 
 #include "utility/deleter.h"
-#include <cstdint>                              // for std::int32_t
-#include <optional>                             // for std::optional
-#include <valarray>                             // for std::valarray
-#include <boost/multi_array.hpp>                // for boost::multi_array
-#include <Eigen/Core>                           // for Eigen::MatrixXd, Eigen::VectorXd
-#include <xc.h>
+#include <cstdint>                  // for std::int32_t
+#include <memory>                   // for std::shared_ptr, std::unique_ptr            
+#include <optional>                 // for std::optional
+#include <valarray>                 // for std::valarray
+#include <boost/multi_array.hpp>    // for boost::multi_array
+#include <Eigen/Core>               // for Eigen::MatrixXd, Eigen::VectorXd
 
 namespace helium_lda {
     //! A class.
@@ -58,12 +58,30 @@ namespace helium_lda {
             \param ep 一般化固有値問題のエネルギー固有値E'
             \return ヘリウム原子のエネルギー
         */
-        double getenergy(double ep) const;
+        double calc_energy(double ep);
+
+        //! A private member function.
+        /*!
+            nalpha個のGTOによるヘリウム原子の交換相関エネルギーを計算する
+            \return ヘリウム原子の交換相関エネルギー
+        */
+        double calc_exc_energy();
+
+        //! A private member function.
+        /*!
+            K'計算用のgsl_functionを初期化する
+        */
+        void init_gsl_function_Kp();
+        
+        //! A private member function.
+        /*!
+            Kpq計算用のgsl_functionを初期化する
+        */
+        void init_gsl_function_Kpq();
 
         //! A private member function.
         /*!
             使用するGTOの数をユーザに入力させる
-            \return 使用するGTOの数
         */
         void input_nalpha();
 
@@ -167,12 +185,18 @@ namespace helium_lda {
             Fock行列
         */
         Eigen::MatrixXd f_;
+        
+        //! A private member variable.
+        /*!
+            gslによるK'計算用の積分オブジェクト
+        */
+        gsl_function func_calc_Kp_;
 
         //! A private member variable.
         /*!
-            gslによる積分オブジェクト
+            gslによるKpq計算用の積分オブジェクト
         */
-        gsl_function func_;
+        gsl_function func_calc_Kpq_;
 
         //! A private member variable.
         /*!
