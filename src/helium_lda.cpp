@@ -353,7 +353,6 @@ namespace helium_lda {
         using namespace boost::math::constants;
 
         gsl_function F;
-
         F.function = [](double x, void * params)
         {
             auto const [alpha, c] = *(reinterpret_cast<std::pair< std::valarray<double>, Eigen::VectorXd> *>(params));
