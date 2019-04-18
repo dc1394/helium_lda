@@ -1,5 +1,5 @@
 ﻿/*! \file helium_lda.cpp
-    \brief VWN-LDAを用い、Kohn-Sham法でヘリウム原子のエネルギーを計算するクラスの実装
+    \brief VWN-LDA汎関数を用い、Kohn-Sham法でヘリウム原子のエネルギーを計算するクラスの実装
     Copyright © 2019 @dc1394 All Rights Reserved.
     (but this is originally adapted by Paolo Giannozzi for helium_hf_gauss.c from http://www.fisica.uniud.it/~giannozz/Corsi/MQ/Software/C/helium_hf_gauss.c )
     This software is released under the BSD 2-Clause License.
@@ -104,7 +104,7 @@ namespace helium_lda {
         // SCF計算が収束しなかった
         return std::nullopt;
     }
-    
+
     // #endregion publicメンバ関数
 
     // #region privateメンバ関数
@@ -113,7 +113,7 @@ namespace helium_lda {
     {
         // E = 2.0 * E'
         auto e = 2.0 * ep;
-        
+
         for (auto p = 0; p < nalpha_; p++) {
             for (auto q = 0; q < nalpha_; q++) {
                 for (auto r = 0; r < nalpha_; r++) {
@@ -124,7 +124,7 @@ namespace helium_lda {
                 }
             }
         }
-  
+
         // E += K'
         e += calc_exc_energy();
         
@@ -204,7 +204,7 @@ namespace helium_lda {
             {
                 rhotemp += c[r] * std::exp(-alpha[r] * x * x);
             }
-            
+
             rhotemp *= rhotemp;
 
             // 電子密度
@@ -287,7 +287,7 @@ namespace helium_lda {
     {
         // 交換相関積分を計算
         make_exchcorrinteg();
-        
+
         for (auto p = 0; p < nalpha_; p++) {
             for (auto qi = 0; qi < nalpha_; qi++) {
                 // Fpq = hpq + ΣCr * Cs * Qprqs + Kpq
@@ -380,4 +380,3 @@ namespace helium_lda {
 
     // #endregion privateメンバ関数
 }
-
