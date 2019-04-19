@@ -6,7 +6,6 @@
 */
 
 #include "helium_lda.h"
-#include "utility/deleter.h"
 #include <array>                                // for std::array
 #include <cmath>                                // for std::pow, std::sqrt
 #include <iostream>                             // for std::cerr, std::cin, std::cout
@@ -21,9 +20,9 @@ namespace helium_lda {
     // #region コンストラクタ・デストラクタ
 
     Helium_LDA::Helium_LDA()
-        :   pcfunc_(new xc_func_type, utility::xcfunc_deleter),
-            ptable_(gsl_integration_glfixed_table_alloc(Helium_LDA::INTEGTABLENUM), utility::gsl_integration_glfixed_table_deleter),
-            pxfunc_(new xc_func_type, utility::xcfunc_deleter)
+        :   pcfunc_(new xc_func_type, xcfunc_deleter),
+            ptable_(gsl_integration_glfixed_table_alloc(Helium_LDA::INTEGTABLENUM), gsl_integration_glfixed_table_free),
+            pxfunc_(new xc_func_type, xcfunc_deleter)
     {
         xc_func_init(pcfunc_.get(), XC_LDA_C_VWN, XC_POLARIZED);
         xc_func_init(pxfunc_.get(), XC_LDA_X, XC_POLARIZED);

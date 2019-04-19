@@ -9,15 +9,26 @@
 
 #pragma once
 
-#include "utility/deleter.h"
 #include <cstdint>                  // for std::int32_t
 #include <memory>                   // for std::shared_ptr, std::unique_ptr            
 #include <optional>                 // for std::optional
 #include <valarray>                 // for std::valarray
 #include <boost/multi_array.hpp>    // for boost::multi_array
+#include <gsl/gsl_integration.h>    // for gsl_integration_glfixed_table_free
 #include <Eigen/Core>               // for Eigen::MatrixXd, Eigen::VectorXd
+#include <xc.h>                     // for xc_func_end
 
 namespace helium_lda {
+    //! A lambda expression.
+    /*!
+        xc_func_typeへのポインタを解放するラムダ式
+        \param xcfunc xc_func_type へのポインタ
+    */
+    static auto const xcfunc_deleter = [](auto * xcfunc) {
+        xc_func_end(xcfunc);
+        delete xcfunc;
+    };
+
     //! A class.
     /*!
         VWN-LDAを用い、Kohn-Sham法でヘリウム原子のエネルギーを計算するクラス
@@ -226,7 +237,7 @@ namespace helium_lda {
         /*!
             gsl_integration_glfixed_tableへのスマートポインタ
         */
-        std::unique_ptr<gsl_integration_glfixed_table, decltype(utility::gsl_integration_glfixed_table_deleter)> const ptable_;
+        std::unique_ptr<gsl_integration_glfixed_table, decltype(&gsl_integration_glfixed_table_free)> const ptable_;
 
         //! A private member variable (constant).
         /*!
