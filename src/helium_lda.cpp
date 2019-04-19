@@ -126,7 +126,7 @@ namespace helium_lda {
 
         // E += K'
         e += calc_exc_energy();
-        
+
         for (auto p = 0; p < nalpha_; p++) {
             for (auto q = 0; q < nalpha_; q++) {
                 // E -= 2.0 * ΣCp * Cq * Kpq
