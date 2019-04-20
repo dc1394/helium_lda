@@ -6,6 +6,7 @@
 */
 
 #include "helium_lda.h"
+#include "myfunctional/functional.h"
 #include <array>                                // for std::array
 #include <cmath>                                // for std::pow, std::sqrt
 #include <iostream>                             // for std::cerr, std::cin, std::cout
@@ -20,8 +21,8 @@ namespace helium_lda {
     // #region コンストラクタ・デストラクタ
 
     Helium_LDA::Helium_LDA()
-        :   pcfunc_(new xc_func_type, xcfunc_deleter),
-            ptable_(gsl_integration_glfixed_table_alloc(Helium_LDA::INTEGTABLENUM), gsl_integration_glfixed_table_free),
+        :   gl_(INTEGTABLENUM),
+            pcfunc_(new xc_func_type, xcfunc_deleter),
             pxfunc_(new xc_func_type, xcfunc_deleter)
     {
         xc_func_init(pcfunc_.get(), XC_LDA_C_VWN, XC_POLARIZED);
@@ -31,12 +32,6 @@ namespace helium_lda {
         input_nalpha();
 
         f_ = Eigen::MatrixXd::Zero(nalpha_, nalpha_);
-
-        // K'計算用のgsl_functionを初期化する
-        init_gsl_function_Kp();
-
-        // Kpq計算用のgsl_functionを初期化する
-        init_gsl_function_Kpq();
 
         h_.resize(boost::extents[nalpha_][nalpha_]);
         k_.resize(boost::extents[nalpha_][nalpha_]);
@@ -142,22 +137,9 @@ namespace helium_lda {
         using namespace boost::math::constants;
         
         auto params = std::make_tuple(alpha_, c_, pxfunc_, pcfunc_);
-        func_calc_Kp_.params = reinterpret_cast<void *>(&params);
-
-        // K'を求める
-        return 8.0 * pi<double>() * gsl_integration_glfixed(&func_calc_Kp_, 0.0, Helium_LDA::MAXR, ptable_.get());
-    }
-
-    void Helium_LDA::init_gsl_function_Kp()
-    {
-        func_calc_Kp_.function = [](double x, void * params)
+        auto const func = myfunctional::make_functional([&params](double x)
         {
-            auto const [alpha, c, pxfunc, pcfunc] =
-                *(reinterpret_cast< 
-                        std::tuple< std::valarray<double>,
-                                    Eigen::VectorXd,
-                                    decltype(pxfunc_),
-                                    decltype(pcfunc_)> *>(params));
+            auto const [alpha, c, pxfunc, pcfunc] = params;
             auto const nalpha = alpha.size();
 
             auto rhotemp = 0.0;
@@ -181,45 +163,10 @@ namespace helium_lda {
             xc_lda_exc(pcfunc.get(), 1, rho.data(), zk_c.data());
 
             return x * x * (zk_x[0] + zk_c[0]) * rhotemp;
-        };
-    }
+        });
 
-    void Helium_LDA::init_gsl_function_Kpq()
-    {
-        func_calc_Kpq_.function = [](double x, void * params)
-        {
-            auto const [alpha, c, pxfunc, pcfunc, p, q] =
-                *(reinterpret_cast< 
-                        std::tuple< std::valarray<double>,
-                                    Eigen::VectorXd,
-                                    decltype(pxfunc_),
-                                    decltype(pcfunc_),
-                                    std::int32_t,
-                                    std::int32_t> *>(params));
-            auto const nalpha = alpha.size();
-
-            auto rhotemp = 0.0;
-            for (auto r = 0U; r < nalpha; r++)
-            {
-                rhotemp += c[r] * std::exp(-alpha[r] * x * x);
-            }
-
-            rhotemp *= rhotemp;
-
-            // 電子密度
-            std::array<double, 2> rho = { rhotemp, rhotemp };
-
-            // 交換相関ポテンシャル
-            std::array<double, 1> zk_x, zk_c;
-
-            // 交換ポテンシャルを求める
-            xc_lda_vxc(pxfunc.get(), 1, rho.data(), zk_x.data());
-
-            // 相関ポテンシャルを求める
-            xc_lda_vxc(pcfunc.get(), 1, rho.data(), zk_c.data());
-
-            return x * x * std::exp(-alpha[p] * x * x) * (zk_x[0] + zk_c[0]) * std::exp(-alpha[q] * x * x);
-        };
+        // K'を求める
+        return 8.0 * pi<double>() * gl_.qgauss(func, 0.0, Helium_LDA::MAXR);
     }
 
     void Helium_LDA::input_nalpha()
@@ -274,10 +221,36 @@ namespace helium_lda {
         for (auto p = 0; p < nalpha_; p++) {
             for (auto q = 0; q < nalpha_; q++) {
                 auto params = std::make_tuple(alpha_, c_, pxfunc_, pcfunc_, p, q);
-                func_calc_Kpq_.params = reinterpret_cast<void *>(&params);
+                auto const func = myfunctional::make_functional([&params](double x)
+                {
+                    auto const [alpha, c, pxfunc, pcfunc, p, q] = params;
+                    auto const nalpha = alpha.size();
 
+                    auto rhotemp = 0.0;
+                    for (auto r = 0U; r < nalpha; r++)
+                    {
+                        rhotemp += c[r] * std::exp(-alpha[r] * x * x);
+                    }
+
+                    rhotemp *= rhotemp;
+
+                    // 電子密度
+                    std::array<double, 2> rho = { rhotemp, rhotemp };
+
+                    // 交換相関ポテンシャル
+                    std::array<double, 1> zk_x, zk_c;
+
+                    // 交換ポテンシャルを求める
+                    xc_lda_vxc(pxfunc.get(), 1, rho.data(), zk_x.data());
+
+                    // 相関ポテンシャルを求める
+                    xc_lda_vxc(pcfunc.get(), 1, rho.data(), zk_c.data());
+
+                    return x * x * std::exp(-alpha[p] * x * x) * (zk_x[0] + zk_c[0]) * std::exp(-alpha[q] * x * x);
+                });
+        
                 // Kpqの要素を埋める
-                k_[p][q] = 4.0 * pi<double>() * gsl_integration_glfixed(&func_calc_Kpq_, 0.0, Helium_LDA::MAXR, ptable_.get());
+                k_[p][q] = 4.0 * pi<double>() * gl_.qgauss(func, 0.0, Helium_LDA::MAXR);
             }
         }
     }
@@ -351,10 +324,10 @@ namespace helium_lda {
     {
         using namespace boost::math::constants;
 
-        gsl_function F;
-        F.function = [](double x, void * params)
+        auto const params = std::make_pair(alpha_, c_);
+        auto const func = myfunctional::make_functional([&params](double x)
         {
-            auto const [alpha, c] = *(reinterpret_cast<std::pair< std::valarray<double>, Eigen::VectorXd> *>(params));
+            auto const [alpha, c] = params;
             auto const nalpha = alpha.size();
 
             auto f = 0.0;
@@ -364,12 +337,9 @@ namespace helium_lda {
             }
 
             return x * x * f * f;
-        };
+        });
 
-        auto params = std::make_pair(alpha_, c_);
-        F.params = reinterpret_cast<void *>(&params);
-
-        auto const sum = 4.0 * pi<double>() * gsl_integration_glfixed(&F, 0.0, Helium_LDA::MAXR, ptable_.get());
+        auto const sum = 4.0 * pi<double>() * gl_.qgauss(func, 0.0, Helium_LDA::MAXR);
 
         for (auto p = 0; p < nalpha_; p++)
         {

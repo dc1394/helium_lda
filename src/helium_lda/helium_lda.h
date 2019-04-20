@@ -9,14 +9,14 @@
 
 #pragma once
 
-#include <cstdint>                  // for std::int32_t
-#include <memory>                   // for std::shared_ptr, std::unique_ptr            
-#include <optional>                 // for std::optional
-#include <valarray>                 // for std::valarray
-#include <boost/multi_array.hpp>    // for boost::multi_array
-#include <gsl/gsl_integration.h>    // for gsl_integration_glfixed_table_free
-#include <Eigen/Core>               // for Eigen::MatrixXd, Eigen::VectorXd
-#include <xc.h>                     // for xc_func_end
+#include "gausslegendre/gausslegendre.h"
+#include <cstdint>                      // for std::int32_t
+#include <memory>                       // for std::shared_ptr, std::unique_ptr            
+#include <optional>                     // for std::optional
+#include <valarray>                     // for std::valarray
+#include <boost/multi_array.hpp>        // for boost::multi_array
+#include <Eigen/Core>                   // for Eigen::MatrixXd, Eigen::VectorXd
+#include <xc.h>                         // for xc_func_end
 
 namespace helium_lda {
     //! A lambda expression.
@@ -77,18 +77,6 @@ namespace helium_lda {
             \return ヘリウム原子の交換相関エネルギー
         */
         double calc_exc_energy();
-
-        //! A private member function.
-        /*!
-            K'計算用のgsl_functionを初期化する
-        */
-        void init_gsl_function_Kp();
-        
-        //! A private member function.
-        /*!
-            Kpq計算用のgsl_functionを初期化する
-        */
-        void init_gsl_function_Kpq();
 
         //! A private member function.
         /*!
@@ -199,15 +187,9 @@ namespace helium_lda {
         
         //! A private member variable.
         /*!
-            gslによるK'計算用の積分オブジェクト
+            Gauss-Legendre積分用オブジェクト
         */
-        gsl_function func_calc_Kp_;
-
-        //! A private member variable.
-        /*!
-            gslによるKpq計算用の積分オブジェクト
-        */
-        gsl_function func_calc_Kpq_;
+        gausslegendre::Gauss_Legendre gl_;
 
         //! A private member variable.
         /*!
@@ -232,12 +214,6 @@ namespace helium_lda {
             相関汎関数へのスマートポインタ
         */
         std::shared_ptr<xc_func_type> const pcfunc_;
-
-        //! A private member variable (constant).
-        /*!
-            gsl_integration_glfixed_tableへのスマートポインタ
-        */
-        std::unique_ptr<gsl_integration_glfixed_table, decltype(&gsl_integration_glfixed_table_free)> const ptable_;
 
         //! A private member variable (constant).
         /*!

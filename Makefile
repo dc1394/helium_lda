@@ -6,7 +6,7 @@ PROG = helium_lda
 #
 # ソースコードが存在する相対パス
 #
-VPATH = src
+VPATH = src/alglib/src src/helium_lda src/helium_lda/gausslegendre
 
 #
 # コンパイル対象のソースファイル群（カレントディレクトリ以下の*.cppファイル）
@@ -31,18 +31,17 @@ DEPS = $(OBJS:.o=.d)
 #
 # C++コンパイラの指定
 #
-CXX = icpc
+CXX = clang++
 
 #
 # C++コンパイラに与える、（最適化等の）オプション
 #
-CXXFLAGS = -Wall -Wextra -xHOST -O3 -ipo -no-prec-div -pipe -std=c++17
+CXXFLAGS = -Wall -Wextra -O3 -std=c++17
 
 #
 # リンク対象に含めるライブラリの指定
 #
-LDFLAGS = -L${MKLROOT}/lib/intel64 -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -ldl \
-		  -lxc -lgsl
+LDFLAGS = -lm -ldl -lxc
 
 #
 # makeの動作
