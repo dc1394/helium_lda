@@ -148,16 +148,12 @@ namespace helium_lda {
     {
         using namespace boost::math::constants;
         
-        auto params = std::make_tuple(alpha_, c_, pxfunc_, pcfunc_);
-        auto const func = myfunctional::make_functional([&params](double x)
+        auto const func = myfunctional::make_functional([this](double x)
         {
-            auto const [alpha, c, pxfunc, pcfunc] = params;
-            auto const nalpha = alpha.size();
-
             auto rhotemp = 0.0;
-            for (auto r = 0U; r < nalpha; r++)
+            for (auto r = 0; r < nalpha_; r++)
             {
-                rhotemp += c[r] * std::exp(-alpha[r] * x * x);
+                rhotemp += c_[r] * std::exp(-alpha_[r] * x * x);
             }
             
             rhotemp *= rhotemp;
@@ -166,13 +162,13 @@ namespace helium_lda {
             std::array<double, 2> rho = { rhotemp, rhotemp };
 
             // 交換相関エネルギー
-            std::array<double, 1> zk_x, zk_c;
+            std::array<double, 2> zk_x, zk_c;
 
             // 交換エネルギーを求める
-            xc_lda_exc(pxfunc.get(), 1, rho.data(), zk_x.data());
+            xc_lda_exc(pxfunc_.get(), 1, rho.data(), zk_x.data());
 
             // 相関エネルギーを求める
-            xc_lda_exc(pcfunc.get(), 1, rho.data(), zk_c.data());
+            xc_lda_exc(pcfunc_.get(), 1, rho.data(), zk_c.data());
 
             return x * x * (zk_x[0] + zk_c[0]) * rhotemp;
         });
@@ -232,16 +228,12 @@ namespace helium_lda {
         
         for (auto p = 0; p < nalpha_; p++) {
             for (auto q = 0; q < nalpha_; q++) {
-                auto params = std::make_tuple(alpha_, c_, pxfunc_, pcfunc_, p, q);
-                auto const func = myfunctional::make_functional([&params](double x)
+                auto const func = myfunctional::make_functional([this, p, q](double x)
                 {
-                    auto const [alpha, c, pxfunc, pcfunc, p, q] = params;
-                    auto const nalpha = alpha.size();
-
                     auto rhotemp = 0.0;
-                    for (auto r = 0U; r < nalpha; r++)
+                    for (auto r = 0; r < nalpha_; r++)
                     {
-                        rhotemp += c[r] * std::exp(-alpha[r] * x * x);
+                        rhotemp += c_[r] * std::exp(-alpha_[r] * x * x);
                     }
 
                     rhotemp *= rhotemp;
@@ -250,15 +242,15 @@ namespace helium_lda {
                     std::array<double, 2> rho = { rhotemp, rhotemp };
 
                     // 交換相関ポテンシャル
-                    std::array<double, 1> zk_x, zk_c;
+                    std::array<double, 2> zk_x, zk_c;
 
                     // 交換ポテンシャルを求める
-                    xc_lda_vxc(pxfunc.get(), 1, rho.data(), zk_x.data());
+                    xc_lda_vxc(pxfunc_.get(), 1, rho.data(), zk_x.data());
 
                     // 相関ポテンシャルを求める
-                    xc_lda_vxc(pcfunc.get(), 1, rho.data(), zk_c.data());
+                    xc_lda_vxc(pcfunc_.get(), 1, rho.data(), zk_c.data());
 
-                    return x * x * std::exp(-alpha[p] * x * x) * (zk_x[0] + zk_c[0]) * std::exp(-alpha[q] * x * x);
+                    return x * x * std::exp(-alpha_[p] * x * x) * (zk_x[0] + zk_c[0]) * std::exp(-alpha_[q] * x * x);
                 });
         
                 // Kpqの要素を埋める
@@ -335,17 +327,12 @@ namespace helium_lda {
     void Helium_LDA::normalize()
     {
         using namespace boost::math::constants;
-
-        auto const params = std::make_pair(alpha_, c_);
-        auto const func = myfunctional::make_functional([&params](double x)
+        auto const func = myfunctional::make_functional([this](double x)
         {
-            auto const [alpha, c] = params;
-            auto const nalpha = alpha.size();
-
             auto f = 0.0;
-            for (auto p = 0U; p < nalpha; p++)
+            for (auto p = 0; p < nalpha_; p++)
             {
-                f += c[p] * std::exp(-alpha[p] * x * x);
+                f += c_[p] * std::exp(-alpha_[p] * x * x);
             }
 
             return x * x * f * f;

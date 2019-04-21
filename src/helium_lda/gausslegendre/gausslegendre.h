@@ -136,3 +136,4 @@ namespace gausslegendre {
 }
 
 #endif  // _GAUSS_LEGENDRE_H_
+

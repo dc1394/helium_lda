@@ -108,3 +108,4 @@ namespace myfunctional {
 }
 
 #endif  // _FUNCTIONAL_H_
+
