@@ -1,8 +1,19 @@
 ﻿/*! \file functional.h
     \brief std::function<double (double)>の代わりになるクラスの宣言と実装
+    Copyright © 2019 @dc1394 All Rights Reserved.
 
-    Copyright ©  2014 @dc1394 All Rights Reserved.
-	This software is released under the BSD 2-Clause License.
+	This program is free software; you can redistribute it and/or modify it
+    under the terms of the GNU General Public License as published by the Free
+    Software Foundation; either version 3 of the License, or (at your option)
+    any later version.
+
+    This program is distributed in the hope that it will be useful, but WITHOUT
+    ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+    FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+    more details.
+
+    You should have received a copy of the GNU General Public License along
+    with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
 #ifndef _FUNCTONAL_H_
@@ -53,7 +64,7 @@ namespace myfunctional {
 
     private:
         // #region メンバ変数
-        
+
         //! A private const variable (reference).
         /*!
             operator()で呼び出す関数
@@ -61,6 +72,26 @@ namespace myfunctional {
         FUNCTYPE const & func_;
 
         // #endregion メンバ変数
+
+        // #region 禁止されたコンストラクタ・メンバ関数
+
+    public:
+        //! A public copy constructor (deleted).
+        /*!
+            コピーコンストラクタ（禁止）
+            \param dummy コピー元のオブジェクト（未使用）
+        */
+        Functional(Functional const & dummy) = delete;
+
+        //! A public member function (deleted).
+        /*!
+            operator=()の宣言（禁止）
+            \param dummy コピー元のオブジェクト（未使用）
+            \return コピー元のオブジェクト
+        */
+        Functional & operator=(Functional const & dummy) = delete;
+
+        // #endregion 禁止されたコンストラクタ・メンバ関数
     };
 
 	template <typename FUNCTYPE>
@@ -77,4 +108,3 @@ namespace myfunctional {
 }
 
 #endif  // _FUNCTIONAL_H_
-
