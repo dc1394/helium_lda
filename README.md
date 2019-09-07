@@ -8,6 +8,7 @@
 　ネルギーを求めるコードです。ビルドには以下のライブラリが必要です。
 　・Boost C++ Libraries
 　・Eigen
+　・Libxc
 
 ★更新履歴
 　2019/3/28 ver.1.0   README.mdを書いて公開。
@@ -53,3 +54,6 @@
 
 　helium_ldaにはEigen projectによるEigenを使用しています。こちらのライセンスは
 　MPL2になります。
+
+　helium_ldaにはMiguel A. L. MarquesらによるLibxcを使用しています。こちらのライ
+　センスはMozilla Public License 2.0になります。
