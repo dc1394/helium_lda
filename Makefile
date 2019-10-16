@@ -36,7 +36,7 @@ CXX = clang++
 #
 # C++コンパイラに与える、（最適化等の）オプション
 #
-CXXFLAGS = -Wall -Wextra -O3 -std=c++17
+CXXFLAGS = -Wall -Wextra -O3 -std=c++17 -mtune=native -march=native
 
 #
 # リンク対象に含めるライブラリの指定

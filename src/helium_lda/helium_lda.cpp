@@ -23,7 +23,6 @@
 #include <cmath>                                // for std::pow, std::sqrt
 #include <iostream>                             // for std::cerr, std::cin, std::cout
 #include <optional>                             // for std::make_optional, std::nullopt
-#include <tuple>                                // for std::make_tuple
 #include <boost/assert.hpp>                     // for BOOST_ASSERT
 #include <boost/format.hpp>                     // for boost::format
 #include <boost/math/constants/constants.hpp>   // for boost::math::constants::pi

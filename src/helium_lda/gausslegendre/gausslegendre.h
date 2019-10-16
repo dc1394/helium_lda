@@ -22,7 +22,6 @@
 #pragma once
 
 #include "../myfunctional/functional.h"
-#include <array>                            // for std::array
 #include <cstdint>                          // for std::int32_t
 #include <vector>                           // for std::vector
 
