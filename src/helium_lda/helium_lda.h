@@ -70,6 +70,12 @@ namespace helium_lda {
         */
         std::optional<double> do_scfloop();
 
+		//! A private member function (const).
+		/*!
+			エネルギーの内訳を表示する
+		*/
+		void express_energy_breakdown() const;
+    	
         // #endregion publicメンバ関数
 
         // #region privateメンバ関数
@@ -81,14 +87,14 @@ namespace helium_lda {
             \param ep 一般化固有値問題のエネルギー固有値E'
             \return ヘリウム原子のエネルギー
         */
-        double calc_energy(double ep);
+        double calc_energy();
 
-        //! A private member function.
+        //! A private member function (const).
         /*!
             nalpha個のGTOによるヘリウム原子の交換相関エネルギーを計算する
             \return ヘリウム原子の交換相関エネルギー
         */
-        double calc_exc_energy();
+        double calc_exc_energy() const;
 
         //! A private member function.
         /*!
@@ -149,6 +155,14 @@ namespace helium_lda {
 
         // #region メンバ変数
 
+#ifdef _DEBUG
+		//! A private member variable (constant expression).
+		/*!
+			許容誤差
+		*/
+		static auto constexpr EPS = 1.0E-13;
+#endif
+    	
         //! A private member variable (constant expression).
         /*!
             Gauss-Legendre積分の分点
@@ -191,6 +205,12 @@ namespace helium_lda {
         */
         Eigen::VectorXd c_;
 
+		//! A private member variable.
+		/*!
+			軌道エネルギーε
+		*/
+		double epsilon_ = 0.0;
+    	
         //! A private member variable.
         /*!
             Fock行列
@@ -211,7 +231,7 @@ namespace helium_lda {
 
         //! A private member variable.
         /*!
-            交換相関積分が格納された4次元配列
+            交換相関積分が格納された2次元配列
         */
         boost::multi_array<double, 2> k_;
 
@@ -244,12 +264,6 @@ namespace helium_lda {
             重なり行列
         */
         Eigen::MatrixXd s_;
-
-        //! A private member variable.
-        /*!
-            交換相関積分が格納された2次元配列
-        */
-        boost::multi_array<double, 2> xc_;
 
         // #region 禁止されたコンストラクタ・メンバ関数
 

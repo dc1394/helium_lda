@@ -19,44 +19,73 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="helium_lda.cpp" />
-    <ClCompile Include="helium_lda_main.cpp" />
+    <ClCompile Include="alglib\src\alglibinternal.cpp" />
+    <ClCompile Include="alglib\src\alglibmisc.cpp" />
+    <ClCompile Include="alglib\src\ap.cpp" />
+    <ClCompile Include="alglib\src\dataanalysis.cpp" />
+    <ClCompile Include="alglib\src\diffequations.cpp" />
+    <ClCompile Include="alglib\src\fasttransforms.cpp" />
+    <ClCompile Include="alglib\src\integration.cpp" />
+    <ClCompile Include="alglib\src\interpolation.cpp" />
+    <ClCompile Include="alglib\src\linalg.cpp" />
+    <ClCompile Include="alglib\src\optimization.cpp" />
+    <ClCompile Include="alglib\src\solvers.cpp" />
+    <ClCompile Include="alglib\src\specialfunctions.cpp" />
+    <ClCompile Include="alglib\src\statistics.cpp" />
+    <ClCompile Include="helium_lda\gausslegendre\gausslegendre.cpp" />
+    <ClCompile Include="helium_lda\helium_lda.cpp" />
+    <ClCompile Include="helium_lda\helium_lda_main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="helium_lda.h" />
-    <ClInclude Include="utility\deleter.h" />
+    <ClInclude Include="alglib\src\alglibinternal.h" />
+    <ClInclude Include="alglib\src\alglibmisc.h" />
+    <ClInclude Include="alglib\src\ap.h" />
+    <ClInclude Include="alglib\src\dataanalysis.h" />
+    <ClInclude Include="alglib\src\diffequations.h" />
+    <ClInclude Include="alglib\src\fasttransforms.h" />
+    <ClInclude Include="alglib\src\integration.h" />
+    <ClInclude Include="alglib\src\interpolation.h" />
+    <ClInclude Include="alglib\src\linalg.h" />
+    <ClInclude Include="alglib\src\optimization.h" />
+    <ClInclude Include="alglib\src\solvers.h" />
+    <ClInclude Include="alglib\src\specialfunctions.h" />
+    <ClInclude Include="alglib\src\statistics.h" />
+    <ClInclude Include="alglib\src\stdafx.h" />
+    <ClInclude Include="helium_lda\gausslegendre\gausslegendre.h" />
+    <ClInclude Include="helium_lda\helium_lda.h" />
+    <ClInclude Include="helium_lda\myfunctional\functional.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{49990526-3A59-4505-A062-6CCE067AEA1B}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>heliumhf</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
@@ -112,12 +141,14 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>C:\mylib64\libxc\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -137,12 +168,17 @@
       <CCppSupport>Cpp17Support</CCppSupport>
       <PrecompiledHeaderFile />
       <LanguageStandard>stdcpplatest</LanguageStandard>
+      <AdditionalIncludeDirectories>C:\mylib64\libxc\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>libxc.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\mylib64\libxc\lib\ia32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">

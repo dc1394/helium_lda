@@ -86,7 +86,7 @@ namespace helium_lda {
             Eigen::GeneralizedSelfAdjointEigenSolver<Eigen::MatrixXd> es(f_, s_);
 
             // E'を取得
-            auto const ep = es.eigenvalues()[0];
+            epsilon_ = es.eigenvalues()[0];
 
             // 固有ベクトルを取得
             c_ = es.eigenvectors().col(0);
@@ -95,9 +95,9 @@ namespace helium_lda {
             auto const eold = enew;
 
             // 今回のSCF計算のエネルギーを計算する
-            enew = calc_energy(ep);
+            enew = calc_energy();
 
-            std::cout << boost::format("Iteration # %2d: KS eigenvalue = %.14f, energy = %.14f\n") % iter % ep % enew;
+            std::cout << boost::format("Iteration # %2d: KS eigenvalue = %.14f, energy = %.14f\n") % iter % epsilon_ % enew;
 
             // SCF計算が収束したかどうか
             if (std::fabs(enew - eold) < Helium_LDA::SCFTHRESHOLD) {
@@ -110,15 +110,74 @@ namespace helium_lda {
         return std::nullopt;
     }
 
+	void Helium_LDA::express_energy_breakdown() const
+	{
+		using namespace boost::math::constants;
+
+#ifdef _DEBUG
+		auto kinetic_debug = 0.0;
+		for (auto p = 0; p < nalpha_; p++) {
+			for (auto q = 0; q < nalpha_; q++) {
+				// αp + αq
+				auto const appaq = alpha_[p] + alpha_[q];
+
+				kinetic_debug += c_[p] * c_[q] * 3.0 * alpha_[p] * alpha_[q] * std::pow((pi<double>() / appaq), 1.5) / appaq;
+			}
+		}
+#endif
+
+		auto nuclear = 0.0;
+		for (auto p = 0; p < nalpha_; p++) {
+			for (auto q = 0; q < nalpha_; q++) {
+				// αp + αq
+				auto const appaq = alpha_[p] + alpha_[q];
+
+				nuclear -= c_[p] * c_[q] * 4.0 * pi<double>() / appaq;
+			}
+		}
+
+		auto hartree = 0.0;
+		for (auto p = 0; p < nalpha_; p++) {
+			for (auto q = 0; q < nalpha_; q++) {
+				for (auto r = 0; r < nalpha_; r++) {
+					for (auto s = 0; s < nalpha_; s++) {
+						hartree += 2.0 * c_[p] * c_[q] * c_[r] * c_[s] * q_[p][q][r][s];
+					}
+				}
+			}
+		}
+
+		auto const exc = calc_exc_energy();
+
+		auto vxc = 0.0;
+		for (auto p = 0; p < nalpha_; p++) {
+			for (auto q = 0; q < nalpha_; q++) {
+				vxc += c_[p] * c_[q] * k_[p][q];
+			}
+		}
+
+		auto const kinetic = epsilon_ - nuclear - 0.25 * hartree - vxc;
+
+#ifdef _DEBUG
+		BOOST_ASSERT(std::fabs(kinetic - kinetic_debug) < EPS);
+#endif
+
+		std::cout << "\nエネルギーの内訳：\n";
+		std::cout << boost::format("運動エネルギー = %.14f (Hartree)\n") % kinetic;
+		std::cout << boost::format("ハートリーエネルギー = %.14f (Hartree)\n") % hartree;
+		std::cout << boost::format("核との相互作用によるエネルギー = %.14f (Hartree)\n") % (2.0 * nuclear);
+		std::cout << boost::format("交換相関エネルギー = %.14f (Hartree)") % exc << std::endl;
+	}
+	
     // #endregion publicメンバ関数
 
     // #region privateメンバ関数
 
-    double Helium_LDA::calc_energy(double ep)
+    double Helium_LDA::calc_energy()
     {
         // E = 2.0 * E'
-        auto e = 2.0 * ep;
-
+        auto e = 2.0 * epsilon_;
+    	
         for (auto p = 0; p < nalpha_; p++) {
             for (auto q = 0; q < nalpha_; q++) {
                 for (auto r = 0; r < nalpha_; r++) {
@@ -143,7 +202,7 @@ namespace helium_lda {
         return e;
     }
 
-    double Helium_LDA::calc_exc_energy()
+    double Helium_LDA::calc_exc_energy() const
     {
         using namespace boost::math::constants;
         
@@ -161,7 +220,7 @@ namespace helium_lda {
             std::array<double, 2> rho = { rhotemp, rhotemp };
 
             // 交換相関エネルギー
-            std::array<double, 2> zk_x, zk_c;
+			std::array<double, 2> zk_x{}, zk_c{};
 
             // 交換エネルギーを求める
             xc_lda_exc(pxfunc_.get(), 1, rho.data(), zk_x.data());
@@ -241,7 +300,7 @@ namespace helium_lda {
                     std::array<double, 2> rho = { rhotemp, rhotemp };
 
                     // 交換相関ポテンシャル
-                    std::array<double, 2> zk_x, zk_c;
+					std::array<double, 2> zk_x{}, zk_c{};
 
                     // 交換ポテンシャルを求める
                     xc_lda_vxc(pxfunc_.get(), 1, rho.data(), zk_x.data());
