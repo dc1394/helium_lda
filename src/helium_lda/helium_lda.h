@@ -207,9 +207,9 @@ namespace helium_lda {
 
 		//! A private member variable.
 		/*!
-			軌道エネルギーε
+			軌道エネルギーE'
 		*/
-		double epsilon_ = 0.0;
+		double ep_ = 0.0;
     	
         //! A private member variable.
         /*!

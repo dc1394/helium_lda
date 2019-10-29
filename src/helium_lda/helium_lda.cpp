@@ -86,7 +86,7 @@ namespace helium_lda {
             Eigen::GeneralizedSelfAdjointEigenSolver<Eigen::MatrixXd> es(f_, s_);
 
             // E'を取得
-            epsilon_ = es.eigenvalues()[0];
+            ep_ = es.eigenvalues()[0];
 
             // 固有ベクトルを取得
             c_ = es.eigenvectors().col(0);
@@ -97,7 +97,7 @@ namespace helium_lda {
             // 今回のSCF計算のエネルギーを計算する
             enew = calc_energy();
 
-            std::cout << boost::format("Iteration # %2d: KS eigenvalue = %.14f, energy = %.14f\n") % iter % epsilon_ % enew;
+            std::cout << boost::format("Iteration # %2d: KS eigenvalue = %.14f, energy = %.14f\n") % iter % ep_ % enew;
 
             // SCF計算が収束したかどうか
             if (std::fabs(enew - eold) < Helium_LDA::SCFTHRESHOLD) {
@@ -156,7 +156,7 @@ namespace helium_lda {
 			}
 		}
 
-		auto const kinetic = epsilon_ - nuclear - 0.25 * hartree - vxc;
+		auto const kinetic = ep_ - nuclear - 0.25 * hartree - vxc;
 
 #ifdef _DEBUG
 		BOOST_ASSERT(std::fabs(kinetic - kinetic_debug) < EPS);
@@ -176,7 +176,7 @@ namespace helium_lda {
     double Helium_LDA::calc_energy()
     {
         // E = 2.0 * E'
-        auto e = 2.0 * epsilon_;
+        auto e = 2.0 * ep_;
     	
         for (auto p = 0; p < nalpha_; p++) {
             for (auto q = 0; q < nalpha_; q++) {
