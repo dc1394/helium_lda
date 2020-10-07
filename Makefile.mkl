@@ -36,12 +36,13 @@ CXX = g++
 #
 # C++コンパイラに与える、（最適化等の）オプション
 #
-CXXFLAGS = -Wall -Wextra -O3 -std=c++17 -mtune=native -march=native -fopenmp
+CXXFLAGS = -Wall -Wextra -O3 -std=c++17 -mtune=native -march=native -fopenmp -m64
 
 #
 # リンク対象に含めるライブラリの指定
 #
-LDFLAGS = -lm -ldl -L/home/dc1394/oss/libxc-5.0.0/src/.libs -lxc
+LDFLAGS = -L${MKLROOT}/lib/intel64 -Wl,--no-as-needed -lmkl_intel_lp64 -lmkl_gnu_thread -lmkl_core -lgomp -lpthread -lm -ldl \
+		  -L/home/dc1394/oss/libxc-5.0.0/src/.libs -lxc
 
 #
 # makeの動作
