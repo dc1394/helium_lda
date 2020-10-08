@@ -36,7 +36,7 @@ CXX = g++
 #
 # C++コンパイラに与える、（最適化等の）オプション
 #
-CXXFLAGS = -Wall -Wextra -O3 -std=c++17 -mtune=native -march=native -fopenmp -m64
+CXXFLAGS = -Wall -Wextra -O3 -std=c++17 -mtune=native -march=native -fopenmp -m64 -I/home/dc1394/oss/libxc-5.0.0/src
 
 #
 # リンク対象に含めるライブラリの指定
