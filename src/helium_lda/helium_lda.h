@@ -191,7 +191,7 @@ namespace helium_lda {
         /*!
             SCF計算のループから抜ける際のエネルギーの差の閾値
         */
-        static auto constexpr SCFTHRESHOLD = 1.0E-15;
+        static auto constexpr SCFTHRESHOLD = 1.0E-14;
 
         //! A private member variable.
         /*!
